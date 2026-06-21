@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>昭和・平成・令和・Z翻訳機</title>
+<style>
+:root{
+  --showa-cream:#f2e8d5;
+  --showa-brown:#5b3a29;
+  --showa-red:#b8412f;
+  --showa-green:#3e5c4a;
+  --showa-gold:#c8973a;
+  --showa-ink:#2b2018;
+  --showa-paper:#fbf5e9;
+  --line:#d8c9a8;
+  --radio-dark:#3a2a20;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:"Hiragino Mincho ProN","Yu Mincho",serif;
+  background:
+    repeating-linear-gradient(0deg, rgba(0,0,0,0.015) 0px, rgba(0,0,0,0.015) 1px, transparent 1px, transparent 3px),
+    var(--showa-cream);
+  color:var(--showa-ink);
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+#app{max-width:920px;margin:0 auto;padding:0 16px 80px;}
+
+/* ===== ヘッダー：レトロラジオ風 ===== */
+header.app-header{
+  background:linear-gradient(180deg, var(--radio-dark), #2a1d15);
+  color:var(--showa-paper);
+  padding:22px 18px 18px;
+  border-radius:0 0 18px 18px;
+  margin-bottom:18px;
+  box-shadow:0 6px 0 rgba(0,0,0,0.15), 0 8px 18px rgba(0,0,0,0.25);
+  position:relative;
+  overflow:hidden;
+}
+header.app-header::before{
+  content:"";
+  position:absolute; inset:0;
+  background:repeating-linear-gradient(90deg, rgba(255,255,255,0.03) 0 2px, transparent 2px 6px);
+  pointer-events:none;
+}
+.header-row{display:flex; align-items:center; justify-content:space-between; gap:10px; position:relative;}
+.brand{display:flex; align-items:center; gap:10px;}
+.brand .dial{
+  width:38px;height:38px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%, #c8973a, #8a6422 70%);
+  border:2px solid #e8d9a8;
+  flex:none;
+}
+.brand h1{font-size:17px; margin:0; letter-spacing:.04em; font-weight:700;}
+.brand .sub{font-size:10px; opacity:.7; letter-spacing:.15em; margin-top:2px;}
+.header-actions{display:flex; gap:8px; align-items:center;}
+.icon-btn{
+  background:rgba(255,255,255,0.08);
+  border:1px solid rgba(255,255,255,0.25);
+  color:var(--showa-paper);
+  border-radius:8px;
+  padding:7px 10px;
+  font-size:12px;
+  cursor:pointer;
+  font-family:inherit;
+}
+.icon-btn:hover{background:rgba(255,255,255,0.16);}
+
+/* ===== タブナビ ===== */
+nav.tabbar{
+  display:flex;
+  gap:6px;
+  background:var(--showa-paper);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:6px;
+  margin-bottom:18px;
+  position:sticky;
+  top:8px;
+  z-index:20;
+  box-shadow:0 4px 12px rgba(91,58,41,0.08);
+  overflow-x:auto;
+}
+nav.tabbar button{
+  flex:1;
+  white-space:nowrap;
+  border:none;
+  background:transparent;
+  color:var(--showa-brown);
+  font-family:inherit;
+  font-size:13px;
+  font-weight:700;
+  padding:9px 8px;
+  border-radius:10px;
+  cursor:pointer;
+}
+nav.tabbar button.active{
+  background:linear-gradient(180deg, var(--showa-red), #93311f);
+  color:#fff;
+  box-shadow:0 3px 0 #7a2818;
+}
+
+/* ===== カード共通 ===== */
+.panel{
+  background:var(--showa-paper);
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:20px;
+  margin-bottom:18px;
+  box-shadow:0 3px 10px rgba(91,58,41,0.06);
+}
+.panel h2{
+  margin:0 0 14px;
+  font-size:16px;
+  color:var(--showa-brown);
+  border-left:5px solid var(--showa-red);
+  padding-left:10px;
+}
+.panel h3{font-size:14px; color:var(--showa-brown); margin:18px 0 8px;}
+.field{margin-bottom:14px;}
+.field label{display:block; font-size:12px; color:var(--showa-brown); margin-bottom:5px; font-weight:700;}
+.field input[type=text],
+.field input[type=email],
+.field input[type=password],
+.field input[type=number],
+.field input[type=datetime-local],
+.field textarea,
+.field select{
+  width:100%;
+  padding:10px 12px;
+  border:1px solid var(--line);
+  border-radius:9px;
+  font-size:14px;
+  font-family:inherit;
+  background:#fff;
+  color:var(--showa-ink);
+}
+.field textarea{resize:vertical; min-height:80px;}
+.pw-wrap{position:relative;}
+.pw-wrap input{padding-right:60px;}
+.pw-toggle{
+  position:absolute; right:6px; top:50%; transform:translateY(-50%);
+  background:var(--showa-cream); border:1px solid var(--line); border-radius:6px;
+  font-size:11px; padding:5px 8px; cursor:pointer; color:var(--showa-brown);
+}
+.hint{font-size:11px; color:#8a7257; margin-top:4px;}
+
+.btn{
+  display:inline-block;
+  background:linear-gradient(180deg, var(--showa-red), #93311f);
+  color:#fff;
+  border:none;
+  padding:11px 20px;
+  border-radius:10px;
+  font-size:14px;
+  font-weight:700;
+  cursor:pointer;
+  font-family:inherit;
+  box-shadow:0 3px 0 #7a2818;
+}
+.btn:active{transform:translateY(2px); box-shadow:0 1px 0 #7a2818;}
+.btn.secondary{
+  background:var(--showa-paper);
+  color:var(--showa-brown);
+  border:1px solid var(--showa-brown);
+  box-shadow:none;
+}
+.btn.ghost{
+  background:transparent; color:var(--showa-brown); border:1px dashed var(--line); box-shadow:none;
+}
+.btn.small{padding:7px 12px; font-size:12px;}
+.btn:disabled{opacity:.5; cursor:not-allowed; box-shadow:none;}
+.btn-row{display:flex; gap:10px; flex-wrap:wrap; margin-top:6px;}
+
+.msg{
+  padding:10px 14px; border-radius:9px; font-size:13px; margin-bottom:14px;
+}
+.msg.error{background:#f6dcd6; color:#8a2e1c; border:1px solid #e0a99a;}
+.msg.success{background:#dfe9de; color:#2f4d36; border:1px solid #aecaa9;}
+
+.link-btn{background:none; border:none; color:var(--showa-red); text-decoration:underline; cursor:pointer; font-size:12px; padding:0; font-family:inherit;}
+
+/* ===== 免責事項ボックス ===== */
+.terms-box{
+  max-height:260px; overflow-y:auto;
+  background:#fff; border:1px solid var(--line); border-radius:10px;
+  padding:14px; font-size:12px; line-height:1.8; color:#4a3a2a;
+  white-space:pre-wrap;
+  margin-bottom:10px;
+}
+.agree-row{display:flex; align-items:flex-start; gap:8px; font-size:13px;}
+.agree-row input{margin-top:3px;}
+
+/* ===== 翻訳機 ===== */
+.translate-stage{
+  background:linear-gradient(180deg, #2a3a30, #1d2820);
+  border-radius:14px;
+  padding:18px;
+  margin-bottom:16px;
+  position:relative;
+}
+.translate-stage::before{
+  content:"";
+  position:absolute; inset:8px;
+  border:2px solid rgba(200,151,58,0.3);
+  border-radius:8px;
+  pointer-events:none;
+}
+.translate-result{
+  min-height:64px;
+  color:#e9f5e9;
+  font-size:15px;
+  line-height:1.7;
+  font-family:"Courier New", monospace;
+  white-space:pre-wrap;
+  padding:6px 4px;
+}
+.translate-result.placeholder{color:rgba(233,245,233,0.4); font-size:13px;}
+.gen-select{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;}
+.gen-chip{
+  flex:1; min-width:70px;
+  text-align:center;
+  padding:10px 6px;
+  border:2px solid var(--line);
+  border-radius:10px;
+  cursor:pointer;
+  font-size:13px;
+  font-weight:700;
+  color:var(--showa-brown);
+  background:#fff;
+}
+.gen-chip.active{
+  background:var(--showa-gold);
+  border-color:#8a6422;
+  color:#3a2a10;
+}
+
+/* ===== イベントカード ===== */
+.event-card{
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:14px 16px;
+  margin-bottom:12px;
+  position:relative;
+}
+.event-card .badge{
+  position:absolute; top:12px; right:12px;
+  font-size:11px; padding:3px 9px; border-radius:20px; font-weight:700;
+}
+.badge.open{background:#dfe9de; color:#2f4d36;}
+.badge.closed{background:#e6e0d0; color:#6b5b3f;}
+.event-card h4{margin:0 6px 8px 0; font-size:15px; color:var(--showa-brown); max-width:78%;}
+.event-meta{font-size:12px; color:#6b5b3f; margin-bottom:4px;}
+.event-desc{font-size:13px; color:#3a2a1a; margin:8px 0; white-space:pre-wrap;}
+.event-foot{display:flex; justify-content:space-between; align-items:center; margin-top:10px; flex-wrap:wrap; gap:8px;}
+.owner-tag{font-size:11px; color:#8a7257;}
+
+.participant-list{margin-top:10px; padding-top:10px; border-top:1px dashed var(--line);}
+.participant-item{font-size:12px; padding:5px 0; display:flex; justify-content:space-between; color:#3a2a1a;}
+.participant-item .sns{color:#8a7257;}
+
+.empty-state{text-align:center; padding:30px 10px; color:#8a7257; font-size:13px;}
+
+footer.app-footer{
+  text-align:center; font-size:11px; color:#8a7257; padding:20px 10px;
+}
+
+/* レスポンシブ: PC幅で少し余白を持たせる */
+@media (min-width:760px){
+  #app{padding-top:10px;}
+  .gen-select{justify-content:center;}
+}
+
+.howto-link{
+  display:block; text-align:center; margin-top:6px; font-size:12px;
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <header class="app-header">
+    <div class="header-row">
+      <div class="brand">
+        <div class="dial"></div>
+        <div>
+          <h1>昭和・平成・令和・Z翻訳機</h1>
+          <div class="sub">SEDAIKAN HONYAKUKI</div>
+        </div>
+      </div>
+      <div class="header-actions" id="headerActions"></div>
+    </div>
+  </header>
+
+  <nav class="tabbar" id="tabbar"></nav>
+
+  <main id="main"></main>
+
+  <footer class="app-footer">
+    © 昭和・平成・令和・Z翻訳機 ｜ 有志ボランティア運営
+  </footer>
+</div>
+
+<script>
+/* ===== 設定 ===== */
+const GAS_API_URL = "https://script.google.com/macros/s/AKfycbx0IRhYORziIDQJNSq8Z_fKXb27Serb-qrDTbqe5SDJtpt6I5WIzMrtMXjhUkn3bLtyXw/exec";
+
+/* ===== 共通ユーティリティ ===== */
+function escHtml(str){
+  if(str === null || str === undefined) return "";
+  return String(str)
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#39;");
+}
+
+function isMobile(){
+  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth < 760;
+}
+document.documentElement.classList.add(isMobile() ? "is-mobile" : "is-pc");
+
+async function callApi(action, payload){
+  payload = payload || {};
+  payload.action = action;
+  const res = await fetch(GAS_API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    redirect: "follow",
+    body: JSON.stringify(payload)
+  });
+  if(!res.ok){
+    throw new Error("通信エラーが発生しました（status " + res.status + "）");
+  }
+  return await res.json();
+}
+
+/* ===== アプリ状態 ===== */
+const state = {
+  token: sessionStorage.getItem("sh_token") || null,
+  profile: JSON.parse(sessionStorage.getItem("sh_profile") || "null"),
+  adminToken: sessionStorage.getItem("sh_admin_token") || null,
+  currentTab: "translate",
+  events: [],
+};
+
+function isLoggedIn(){ return !!state.token; }
+function isAdmin(){ return !!state.adminToken; }
+
+function setSession(token, profile){
+  state.token = token;
+  state.profile = profile;
+  sessionStorage.setItem("sh_token", token);
+  sessionStorage.setItem("sh_profile", JSON.stringify(profile));
+}
+function clearSession(){
+  state.token = null;
+  state.profile = null;
+  sessionStorage.removeItem("sh_token");
+  sessionStorage.removeItem("sh_profile");
+}
+function setAdminSession(token){
+  state.adminToken = token;
+  sessionStorage.setItem("sh_admin_token", token);
+}
+function clearAdminSession(){
+  state.adminToken = null;
+  sessionStorage.removeItem("sh_admin_token");
+}
+
+/* ===== ルーター（タブ） ===== */
+const TABS = [
+  { id:"translate", label:"翻訳機" },
+  { id:"events", label:"イベント" },
+  { id:"mypage", label:"マイページ" },
+  { id:"howto", label:"使い方" },
+  { id:"admin", label:"管理者" },
+];
+
+function renderTabbar(){
+  const bar = document.getElementById("tabbar");
+  bar.innerHTML = "";
+  TABS.forEach(t=>{
+    const btn = document.createElement("button");
+    btn.textContent = t.label;
+    if(state.currentTab === t.id) btn.classList.add("active");
+    btn.onclick = ()=>{ state.currentTab = t.id; renderAll(); };
+    bar.appendChild(btn);
+  });
+}
+
+function renderHeaderActions(){
+  const el = document.getElementById("headerActions");
+  el.innerHTML = "";
+  if(isLoggedIn()){
+    const span = document.createElement("span");
+    span.style.fontSize = "11px";
+    span.style.opacity = "0.85";
+    span.textContent = (state.profile && state.profile.nickname) ? state.profile.nickname + " さん" : "";
+    el.appendChild(span);
+    const btn = document.createElement("button");
+    btn.className = "icon-btn";
+    btn.textContent = "ログアウト";
+    btn.onclick = ()=>{ clearSession(); state.currentTab = "translate"; renderAll(); };
+    el.appendChild(btn);
+  } else {
+    const btn = document.createElement("button");
+    btn.className = "icon-btn";
+    btn.textContent = "ログイン";
+    btn.onclick = ()=>{ state.currentTab = "mypage"; renderAll(); };
+    el.appendChild(btn);
+  }
+}
+
+function renderAll(){
+  renderTabbar();
+  renderHeaderActions();
+  const main = document.getElementById("main");
+  main.innerHTML = "";
+  if(state.currentTab === "translate") renderTranslateTab(main);
+  else if(state.currentTab === "events") renderEventsTab(main);
+  else if(state.currentTab === "mypage") renderMypageTab(main);
+  else if(state.currentTab === "howto") renderHowtoTab(main);
+  else if(state.currentTab === "admin") renderAdminTab(main);
+  window.scrollTo({top:0, behavior:"instant"});
+}
+
+renderAll();
+</script>
+
+<script>
+/* ===== 共通: メッセージ表示 ===== */
+function msgHtml(text, type){
+  if(!text) return "";
+  return '<div class="msg ' + type + '">' + escHtml(text) + '</div>';
+}
+
+/* =========================================================
+   翻訳機タブ
+========================================================= */
+const GENERATIONS = ["昭和","平成","令和","Z"];
+
+function renderTranslateTab(main){
+  const panel = document.createElement("div");
+  panel.className = "panel";
+  panel.innerHTML =
+    '<h2>世代間ことば翻訳機</h2>' +
+    '<div class="field">' +
+      '<label>翻訳したい言葉</label>' +
+      '<textarea id="trInput" placeholder="例：それな、わかりみが深い"></textarea>' +
+    '</div>' +
+    '<div class="field">' +
+      '<label>変換先の世代を選んでください</label>' +
+      '<div class="gen-select" id="genSelect"></div>' +
+    '</div>' +
+    '<div id="trMsg"></div>' +
+    '<div class="btn-row">' +
+      '<button class="btn" id="trGoBtn">翻訳する</button>' +
+    '</div>' +
+    '<div class="translate-stage">' +
+      '<div class="translate-result placeholder" id="trResult">ここに翻訳結果が表示されます。</div>' +
+    '</div>' +
+    '<p class="hint">※ AIによる自動翻訳です。雰囲気を楽しむための機能としてご利用ください。</p>';
+  main.appendChild(panel);
+
+  let selectedGen = "令和";
+  const genSelect = panel.querySelector("#genSelect");
+  GENERATIONS.forEach(g=>{
+    const chip = document.createElement("div");
+    chip.className = "gen-chip" + (g===selectedGen ? " active" : "");
+    chip.textContent = g + "世代風";
+    chip.onclick = ()=>{
+      selectedGen = g;
+      genSelect.querySelectorAll(".gen-chip").forEach(c=>c.classList.remove("active"));
+      chip.classList.add("active");
+    };
+    genSelect.appendChild(chip);
+  });
+
+  panel.querySelector("#trGoBtn").onclick = async ()=>{
+    const text = panel.querySelector("#trInput").value.trim();
+    const msgEl = panel.querySelector("#trMsg");
+    const resultEl = panel.querySelector("#trResult");
+    msgEl.innerHTML = "";
+    if(!text){
+      msgEl.innerHTML = msgHtml("翻訳したい言葉を入力してください。", "error");
+      return;
+    }
+    const btn = panel.querySelector("#trGoBtn");
+    btn.disabled = true;
+    btn.textContent = "翻訳中…";
+    resultEl.classList.add("placeholder");
+    resultEl.textContent = "翻訳しています…";
+    try{
+      const res = await callApi("translate", { text: text, targetGeneration: selectedGen });
+      if(res.ok){
+        resultEl.classList.remove("placeholder");
+        resultEl.textContent = res.result;
+      } else {
+        msgEl.innerHTML = msgHtml(res.error || "翻訳に失敗しました。", "error");
+        resultEl.classList.add("placeholder");
+        resultEl.textContent = "ここに翻訳結果が表示されます。";
+      }
+    } catch(err){
+      msgEl.innerHTML = msgHtml("通信エラーが発生しました。時間をおいて再度お試しください。", "error");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "翻訳する";
+    }
+  };
+}
+
+/* =========================================================
+   イベントタブ
+========================================================= */
+function formatDateTime(s){
+  if(!s) return "";
+  const d = new Date(s);
+  if(isNaN(d.getTime())) return s;
+  return d.getFullYear() + "/" + (d.getMonth()+1) + "/" + d.getDate() + " " +
+    String(d.getHours()).padStart(2,"0") + ":" + String(d.getMinutes()).padStart(2,"0");
+}
+
+async function renderEventsTab(main){
+  if(!isLoggedIn()){
+    const panel = document.createElement("div");
+    panel.className = "panel";
+    panel.innerHTML =
+      '<h2>イベント</h2>' +
+      '<p>イベントの閲覧・参加にはログインが必要です。</p>' +
+      '<div class="btn-row"><button class="btn" id="goLoginBtn">ログインする</button></div>';
+    main.appendChild(panel);
+    panel.querySelector("#goLoginBtn").onclick = ()=>{ state.currentTab = "mypage"; renderAll(); };
+    return;
+  }
+
+  const headerPanel = document.createElement("div");
+  headerPanel.className = "panel";
+  headerPanel.innerHTML =
+    '<h2>イベント一覧</h2>' +
+    '<div class="btn-row"><button class="btn" id="newEventBtn">＋ イベントを企画する</button></div>' +
+    '<div id="eventsMsg"></div>';
+  main.appendChild(headerPanel);
+
+  const listWrap = document.createElement("div");
+  listWrap.id = "eventsList";
+  listWrap.innerHTML = '<div class="empty-state">読み込み中…</div>';
+  main.appendChild(listWrap);
+
+  headerPanel.querySelector("#newEventBtn").onclick = ()=> openEventForm(null);
+
+  await loadAndRenderEvents();
+}
+
+async function loadAndRenderEvents(){
+  const listWrap = document.getElementById("eventsList");
+  if(!listWrap) return;
+  try{
+    const res = await callApi("listEvents", {});
+    if(!res.ok){
+      listWrap.innerHTML = '<div class="empty-state">' + escHtml(res.error || "イベントの取得に失敗しました。") + '</div>';
+      return;
+    }
+    state.events = res.events || [];
+    if(state.events.length === 0){
+      listWrap.innerHTML = '<div class="empty-state">まだイベントが登録されていません。最初の企画者になりませんか？</div>';
+      return;
+    }
+    listWrap.innerHTML = "";
+    state.events.forEach(ev=> listWrap.appendChild(buildEventCard(ev)));
+  } catch(err){
+    listWrap.innerHTML = '<div class="empty-state">通信エラーが発生しました。</div>';
+  }
+}
+
+function buildEventCard(ev){
+  const card = document.createElement("div");
+  card.className = "event-card";
+  const isOwner = state.profile && ev.ownerNickname === state.profile.nickname;
+  const closed = ev.status === "closed" || ev.status === "cancelled";
+
+  card.innerHTML =
+    '<span class="badge ' + (closed ? "closed" : "open") + '">' + (closed ? "募集終了" : "募集中") + '</span>' +
+    '<h4>' + escHtml(ev.title) + '</h4>' +
+    '<div class="event-meta">📅 ' + escHtml(formatDateTime(ev.datetime)) + (ev.place ? "　📍 " + escHtml(ev.place) : "") + '</div>' +
+    '<div class="event-meta">定員 ' + escHtml(ev.capacity || "未設定") + '名 ／ 参加表明 ' + escHtml(ev.joinedCount) + '名' +
+      (ev.deadline ? "　／ 締切 " + escHtml(formatDateTime(ev.deadline)) : "") + '</div>' +
+    '<div class="event-desc">' + escHtml(ev.description || "") + '</div>' +
+    '<div class="owner-tag">企画者：' + escHtml(ev.ownerNickname) + '</div>' +
+    '<div class="event-foot" id="foot-' + ev.eventId + '"></div>' +
+    '<div class="participant-list" id="plist-' + ev.eventId + '"></div>';
+
+  const foot = card.querySelector('#foot-' + cssEscape(ev.eventId));
+  const joinBtn = document.createElement("button");
+  joinBtn.className = "btn small";
+  joinBtn.textContent = closed ? "募集終了" : "参加表明する";
+  joinBtn.disabled = closed;
+  joinBtn.onclick = ()=> openJoinForm(ev);
+  foot.appendChild(joinBtn);
+
+  const declineBtn = document.createElement("button");
+  declineBtn.className = "btn small secondary";
+  declineBtn.textContent = "不参加にする";
+  declineBtn.onclick = async ()=>{
+    await callApi("leaveEvent", { token: state.token, eventId: ev.eventId });
+    await loadAndRenderEvents();
+  };
+  foot.appendChild(declineBtn);
+
+  const toggleBtn = document.createElement("button");
+  toggleBtn.className = "btn small ghost";
+  toggleBtn.textContent = "参加者一覧を見る";
+  toggleBtn.onclick = ()=> toggleParticipants(ev.eventId);
+  foot.appendChild(toggleBtn);
+
+  if(isOwner){
+    const editBtn = document.createElement("button");
+    editBtn.className = "btn small secondary";
+    editBtn.textContent = "編集";
+    editBtn.onclick = ()=> openEventForm(ev);
+    foot.appendChild(editBtn);
+
+    const delBtn = document.createElement("button");
+    delBtn.className = "btn small ghost";
+    delBtn.textContent = "削除";
+    delBtn.onclick = async ()=>{
+      if(!confirm("このイベントを削除します。よろしいですか？")) return;
+      await callApi("deleteEvent", { token: state.token, eventId: ev.eventId });
+      await loadAndRenderEvents();
+    };
+    foot.appendChild(delBtn);
+  }
+
+  return card;
+}
+
+function cssEscape(id){
+  return id.replace(/[^a-zA-Z0-9_-]/g, "_");
+}
+
+async function toggleParticipants(eventId){
+  const wrap = document.getElementById('plist-' + cssEscape(eventId));
+  if(!wrap) return;
+  if(wrap.dataset.open === "true"){
+    wrap.innerHTML = "";
+    wrap.dataset.open = "false";
+    return;
+  }
+  wrap.innerHTML = '<div class="hint">読み込み中…</div>';
+  const res = await callApi("getParticipants", { eventId: eventId });
+  if(!res.ok){
+    wrap.innerHTML = '<div class="hint">取得に失敗しました。</div>';
+    return;
+  }
+  if(res.participants.length === 0){
+    wrap.innerHTML = '<div class="hint">まだ参加表明がありません。</div>';
+  } else {
+    wrap.innerHTML = res.participants.map(p=>
+      '<div class="participant-item"><span>' + escHtml(p.nickname) + '（' + escHtml(p.count) + '名）</span><span class="sns">' + escHtml(p.sns || "") + '</span></div>'
+    ).join("");
+  }
+  wrap.dataset.open = "true";
+}
+
+function openJoinForm(ev){
+  const count = prompt("参加人数（同伴者含む）を入力してください", "1");
+  if(count === null) return;
+  const n = Number(count);
+  if(!n || n < 1){ alert("正しい人数を入力してください。"); return; }
+  callApi("joinEvent", { token: state.token, eventId: ev.eventId, count: n }).then(res=>{
+    if(!res.ok){ alert(res.error || "参加登録に失敗しました。"); }
+    loadAndRenderEvents();
+  });
+}
+
+function openEventForm(ev){
+  const isEdit = !!ev;
+  const overlay = document.createElement("div");
+  overlay.style.cssText = "position:fixed;inset:0;background:rgba(43,32,24,0.55);z-index:50;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:24px 12px;";
+  overlay.innerHTML =
+    '<div class="panel" style="max-width:520px;width:100%;margin:0;">' +
+      '<h2>' + (isEdit ? "イベントを編集" : "イベントを企画する") + '</h2>' +
+      '<div id="evFormMsg"></div>' +
+      '<div class="field"><label>イベント名</label><input type="text" id="evTitle" value="' + (isEdit ? escHtml(ev.title) : "") + '"></div>' +
+      '<div class="field"><label>概要</label><textarea id="evDesc">' + (isEdit ? escHtml(ev.description) : "") + '</textarea></div>' +
+      '<div class="field"><label>日時</label><input type="datetime-local" id="evDatetime" value="' + (isEdit ? toLocalInputValue(ev.datetime) : "") + '"></div>' +
+      '<div class="field"><label>開催場所</label><input type="text" id="evPlace" value="' + (isEdit ? escHtml(ev.place) : "") + '"></div>' +
+      '<div class="field"><label>募集人数</label><input type="number" id="evCapacity" min="1" value="' + (isEdit ? escHtml(ev.capacity) : "") + '"></div>' +
+      '<div class="field"><label>募集期限</label><input type="datetime-local" id="evDeadline" value="' + (isEdit ? toLocalInputValue(ev.deadline) : "") + '"></div>' +
+      '<div class="btn-row">' +
+        '<button class="btn" id="evSaveBtn">' + (isEdit ? "更新する" : "登録する") + '</button>' +
+        '<button class="btn secondary" id="evCancelBtn">キャンセル</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(overlay);
+
+  overlay.querySelector("#evCancelBtn").onclick = ()=> overlay.remove();
+
+  overlay.querySelector("#evSaveBtn").onclick = async ()=>{
+    const title = overlay.querySelector("#evTitle").value.trim();
+    const description = overlay.querySelector("#evDesc").value.trim();
+    const datetime = overlay.querySelector("#evDatetime").value;
+    const place = overlay.querySelector("#evPlace").value.trim();
+    const capacity = overlay.querySelector("#evCapacity").value;
+    const deadline = overlay.querySelector("#evDeadline").value;
+    const msgEl = overlay.querySelector("#evFormMsg");
+
+    if(!title || !datetime){
+      msgEl.innerHTML = msgHtml("イベント名と日時は必須です。", "error");
+      return;
+    }
+
+    const payload = { token: state.token, title, description, datetime, place, capacity, deadline };
+    let res;
+    if(isEdit){
+      payload.eventId = ev.eventId;
+      res = await callApi("updateEvent", payload);
+    } else {
+      res = await callApi("createEvent", payload);
+    }
+
+    if(res.ok){
+      overlay.remove();
+      await loadAndRenderEvents();
+    } else {
+      msgEl.innerHTML = msgHtml(res.error || "保存に失敗しました。", "error");
+    }
+  };
+}
+
+function toLocalInputValue(s){
+  if(!s) return "";
+  const d = new Date(s);
+  if(isNaN(d.getTime())) return "";
+  const pad = n => String(n).padStart(2,"0");
+  return d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate()) + "T" + pad(d.getHours()) + ":" + pad(d.getMinutes());
+}
+
+/* =========================================================
+   マイページタブ（ログイン／登録／パスワード再発行／プロフィール）
+========================================================= */
+const TERMS_TEXT = `◻️免責事項および注意事項◻️
+
+本サービス（以下「当サービス」といいます）は、有志のボランティアにより運営され、会員の皆様に無料で提供されているものです。
+ご利用いただくにあたり、会員の皆様に安心・安全にご利用いただくための注意事項および免責事項を定めています。会員登録を完了された時点で、本内容に同意したものとみなされます。
+
+1. 無料提供およびボランティア運営に伴う原則
+当サービスはボランティアによる善意で運営されており、会員に対して何らの対価を求めるものではありません。
+運営側は、当サービスの永続的な提供、運営サポート、システムの完全性（エラーやバグの不発生）、および特定の目的への適合性について、いかなる保証も行いません。
+
+2. 自己責任の原則
+会員は、当サービスが無料のボランティア運営であることを十分理解した上で、自己の責任において当サービスを利用するものとします。
+当サービスを通じて提供される情報、他の会員とのやり取り、およびそれに付随する一切の行為については、会員ご自身でその正確性や安全性を判断してください。
+
+3. 当事者間での問題解決
+当サービスをきっかけとして生じた会員間、または会員と第三者との間のトラブル、紛争、損害（金銭的トラブル、誹謗中傷、出会いに関するトラブル等を含みますがこれらに限りません）については、すべて当事者間で解決するものとします。
+
+4. 運営側の不関与（免責事項）
+運営側は、会員間のトラブルおよび会員が被った損害について、理由の如何を問わず一切の責任を負いません。また、トラブルに対する仲裁、調停、相談対応、交渉等を行う義務も負わないものとします。
+ボランティア運営の特性上、事前の予告なくサービスの変更、一時停止、または終了することがあります。これによって生じた損害についても、運営側は一切の責任を負いません。
+
+5. 禁止事項（公序良俗の遵守）
+会員は、当サービスの利用にあたり、以下の行為を行ってはならないものとします。
+・公序良俗に反する行為、またはその恐れのある行為
+・法令、条例、または本規約に違反する行為
+・他の会員、運営側、または第三者の財産、プライバシー、名誉、信用を侵害する行為（誹謗中傷や迷惑行為など）
+・営利目的、商業目的の宣伝、強引な勧誘、または宗教・政治活動への過度な勧誘行為
+・運営側のボランティア活動を妨害する行為、または運営側に不当な負担をかける行為
+
+6. 利用制限および登録抹消
+会員が上記の禁止事項に違反した場合、または公序良俗に反する行為を行ったと運営側が判断した場合、運営側は事前の通知なしに、該当する投稿の削除、サービスの利用停止、または会員登録の抹消（強制退会）を行うことができるものとします。
+◻️◻️`;
+
+function renderMypageTab(main){
+  if(!isLoggedIn()){
+    renderAuthPanels(main);
+    return;
+  }
+  renderProfilePanel(main);
+}
+
+function renderAuthPanels(main){
+  // ログインパネル
+  const loginPanel = document.createElement("div");
+  loginPanel.className = "panel";
+  loginPanel.innerHTML =
+    '<h2>ログイン</h2>' +
+    '<div id="loginMsg"></div>' +
+    '<div class="field"><label>会員番号（メールアドレス）</label><input type="email" id="liEmail"></div>' +
+    '<div class="field"><label>パスワード</label>' +
+      '<div class="pw-wrap"><input type="password" id="liPassword"><button class="pw-toggle" type="button" data-target="liPassword">表示</button></div>' +
+    '</div>' +
+    '<div class="btn-row"><button class="btn" id="liBtn">ログイン</button></div>' +
+    '<button class="link-btn" style="margin-top:10px;" id="gotoResetBtn">パスワードをお忘れの方はこちら</button>';
+  main.appendChild(loginPanel);
+  bindPasswordToggle(loginPanel);
+
+  loginPanel.querySelector("#liBtn").onclick = async ()=>{
+    const email = loginPanel.querySelector("#liEmail").value.trim();
+    const password = loginPanel.querySelector("#liPassword").value;
+    const msgEl = loginPanel.querySelector("#loginMsg");
+    if(!email || !password){
+      msgEl.innerHTML = msgHtml("会員番号とパスワードを入力してください。", "error");
+      return;
+    }
+    const res = await callApi("login", { email, password });
+    if(res.ok){
+      setSession(res.token, res.profile);
+      renderAll();
+    } else {
+      msgEl.innerHTML = msgHtml(res.error || "ログインに失敗しました。", "error");
+    }
+  };
+
+  loginPanel.querySelector("#gotoResetBtn").onclick = ()=>{
+    main.innerHTML = "";
+    renderResetPanel(main);
+    renderRegisterPanel(main);
+  };
+
+  // パスワード再発行パネル
+  renderResetPanel(main);
+
+  // 新規登録パネル
+  renderRegisterPanel(main);
+}
+
+function renderResetPanel(main){
+  const panel = document.createElement("div");
+  panel.className = "panel";
+  panel.innerHTML =
+    '<h2>パスワード問合せ（再発行）</h2>' +
+    '<p class="hint">会員番号（メールアドレス）を入力すると、登録メールに仮パスワードを送信します。</p>' +
+    '<div id="resetMsg"></div>' +
+    '<div class="field"><label>会員番号（メールアドレス）</label><input type="email" id="rsEmail"></div>' +
+    '<div class="btn-row"><button class="btn secondary" id="rsBtn">仮パスワードを送信</button></div>';
+  main.appendChild(panel);
+
+  panel.querySelector("#rsBtn").onclick = async ()=>{
+    const email = panel.querySelector("#rsEmail").value.trim();
+    const msgEl = panel.querySelector("#resetMsg");
+    if(!email){
+      msgEl.innerHTML = msgHtml("会員番号（メールアドレス）を入力してください。", "error");
+      return;
+    }
+    const res = await callApi("requestPasswordReset", { email });
+    msgEl.innerHTML = res.ok ? msgHtml(res.message, "success") : msgHtml(res.error || "送信に失敗しました。", "error");
+  };
+}
+
+function renderRegisterPanel(main){
+  const panel = document.createElement("div");
+  panel.className = "panel";
+  panel.innerHTML =
+    '<h2>新規会員登録</h2>' +
+    '<div id="regMsg"></div>' +
+    '<div class="field"><label>メールアドレス（会員番号になります）</label><input type="email" id="regEmail"></div>' +
+    '<div class="field"><label>ニックネーム</label><input type="text" id="regNickname"></div>' +
+    '<div class="field"><label>連絡用SNS（任意）</label><input type="text" id="regSns" placeholder="例：X @example / LINE ID: example"></div>' +
+    '<h3>免責事項および注意事項</h3>' +
+    '<div class="terms-box">' + escHtml(TERMS_TEXT) + '</div>' +
+    '<label class="agree-row"><input type="checkbox" id="regAgree"> 上記の免責事項および注意事項に同意します</label>' +
+    '<div class="btn-row" style="margin-top:14px;"><button class="btn" id="regBtn">登録する</button></div>';
+  main.appendChild(panel);
+
+  panel.querySelector("#regBtn").onclick = async ()=>{
+    const email = panel.querySelector("#regEmail").value.trim();
+    const nickname = panel.querySelector("#regNickname").value.trim();
+    const sns = panel.querySelector("#regSns").value.trim();
+    const agreed = panel.querySelector("#regAgree").checked;
+    const msgEl = panel.querySelector("#regMsg");
+
+    if(!email || !nickname){
+      msgEl.innerHTML = msgHtml("メールアドレスとニックネームを入力してください。", "error");
+      return;
+    }
+    if(!agreed){
+      msgEl.innerHTML = msgHtml("免責事項および注意事項への同意が必要です。", "error");
+      return;
+    }
+    const btn = panel.querySelector("#regBtn");
+    btn.disabled = true;
+    const res = await callApi("register", { email, nickname, sns, agreed });
+    btn.disabled = false;
+    msgEl.innerHTML = res.ok ? msgHtml(res.message, "success") : msgHtml(res.error || "登録に失敗しました。", "error");
+  };
+}
+
+function renderProfilePanel(main){
+  const panel = document.createElement("div");
+  panel.className = "panel";
+  panel.innerHTML =
+    '<h2>マイページ</h2>' +
+    '<div id="profileMsg"></div>' +
+    '<div class="field"><label>会員番号（メールアドレス）</label><input type="text" value="' + escHtml(state.profile.email) + '" disabled></div>' +
+    '<div class="field"><label>ニックネーム</label><input type="text" id="pfNickname" value="' + escHtml(state.profile.nickname) + '"></div>' +
+    '<div class="field"><label>連絡用SNS（任意）</label><input type="text" id="pfSns" value="' + escHtml(state.profile.sns || "") + '"></div>' +
+    '<div class="btn-row"><button class="btn" id="pfSaveBtn">プロフィールを更新</button></div>';
+  main.appendChild(panel);
+
+  panel.querySelector("#pfSaveBtn").onclick = async ()=>{
+    const nickname = panel.querySelector("#pfNickname").value.trim();
+    const sns = panel.querySelector("#pfSns").value.trim();
+    const msgEl = panel.querySelector("#profileMsg");
+    if(!nickname){
+      msgEl.innerHTML = msgHtml("ニックネームを入力してください。", "error");
+      return;
+    }
+    const res = await callApi("updateProfile", { token: state.token, nickname, sns });
+    if(res.ok){
+      state.profile.nickname = nickname;
+      state.profile.sns = sns;
+      sessionStorage.setItem("sh_profile", JSON.stringify(state.profile));
+      msgEl.innerHTML = msgHtml(res.message, "success");
+      renderHeaderActions();
+    } else {
+      msgEl.innerHTML = msgHtml(res.error || "更新に失敗しました。", "error");
+    }
+  };
+
+  // パスワード変更パネル
+  const pwPanel = document.createElement("div");
+  pwPanel.className = "panel";
+  pwPanel.innerHTML =
+    '<h2>パスワード変更</h2>' +
+    '<div id="pwMsg"></div>' +
+    '<div class="field"><label>新しいパスワード（8文字以上）</label>' +
+      '<div class="pw-wrap"><input type="password" id="newPw"><button class="pw-toggle" type="button" data-target="newPw">表示</button></div>' +
+    '</div>' +
+    '<div class="btn-row"><button class="btn secondary" id="pwBtn">パスワードを変更</button></div>';
+  main.appendChild(pwPanel);
+  bindPasswordToggle(pwPanel);
+
+  pwPanel.querySelector("#pwBtn").onclick = async ()=>{
+    const newPassword = pwPanel.querySelector("#newPw").value;
+    const msgEl = pwPanel.querySelector("#pwMsg");
+    const res = await callApi("changePassword", { token: state.token, newPassword });
+    msgEl.innerHTML = res.ok ? msgHtml(res.message, "success") : msgHtml(res.error || "変更に失敗しました。", "error");
+    if(res.ok) pwPanel.querySelector("#newPw").value = "";
+  };
+}
+
+function bindPasswordToggle(scope){
+  scope.querySelectorAll(".pw-toggle").forEach(btn=>{
+    btn.onclick = ()=>{
+      const input = scope.querySelector("#" + btn.dataset.target);
+      if(input.type === "password"){
+        input.type = "text";
+        btn.textContent = "非表示";
+      } else {
+        input.type = "password";
+        btn.textContent = "表示";
+      }
+    };
+  });
+}
+
+/* =========================================================
+   使い方タブ
+========================================================= */
+function renderHowtoTab(main){
+  const panel = document.createElement("div");
+  panel.className = "panel";
+  panel.innerHTML =
+    '<h2>使い方ガイド</h2>' +
+
+    '<h3>① 会員登録</h3>' +
+    '<p class="event-desc">「マイページ」タブから新規会員登録を行います。メールアドレス・ニックネームを入力し、免責事項に同意のうえ登録すると、登録メールアドレス宛に仮パスワードが届きます。</p>' +
+
+    '<h3>② ログイン・パスワード変更</h3>' +
+    '<p class="event-desc">会員番号（メールアドレス）と仮パスワードでログインしたら、マイページから必ず新しいパスワードに変更してください。パスワード入力欄の「表示」ボタンで入力内容を確認できます。</p>' +
+
+    '<h3>③ パスワードを忘れた場合</h3>' +
+    '<p class="event-desc">マイページの「パスワード問合せ」から会員番号を入力すると、新しい仮パスワードが登録メールアドレスに届きます。</p>' +
+
+    '<h3>④ 翻訳機の使い方</h3>' +
+    '<p class="event-desc">「翻訳機」タブで言葉を入力し、変換したい世代（昭和・平成・令和・Z）を選んで「翻訳する」を押すと、その世代風の言い回しに変換されます。</p>' +
+
+    '<h3>⑤ イベントへの参加</h3>' +
+    '<p class="event-desc">「イベント」タブで開催中のイベントを確認し、「参加表明する」から参加人数を入力して参加登録できます。参加者一覧はニックネームとSNS（登録があれば）で表示されます。募集人数や募集期限に達すると自動的に「募集終了」と表示されます。</p>' +
+
+    '<h3>⑥ イベントの企画</h3>' +
+    '<p class="event-desc">「＋ イベントを企画する」から、誰でも自由にイベントを登録できます。自分が企画したイベントは、自分で編集・削除ができます。</p>' +
+
+    '<h3>⑦ プロフィール</h3>' +
+    '<p class="event-desc">マイページでニックネームや連絡用SNSを編集できます。他の会員にはニックネームのみが表示され、メールアドレスが公開されることはありません。</p>' +
+
+    '<h3>ご注意</h3>' +
+    '<p class="event-desc">本サービスは有志ボランティアによる無料運営です。会員間のトラブルについて運営は関与いたしません。詳しくは会員登録時の「免責事項および注意事項」をご確認ください。</p>';
+  main.appendChild(panel);
+}
+
+/* =========================================================
+   管理者タブ
+========================================================= */
+function renderAdminTab(main){
+  if(!isAdmin()){
+    const panel = document.createElement("div");
+    panel.className = "panel";
+    panel.innerHTML =
+      '<h2>管理者ログイン</h2>' +
+      '<div id="adminLoginMsg"></div>' +
+      '<div class="field"><label>管理者パスワード</label>' +
+        '<div class="pw-wrap"><input type="password" id="adminPw"><button class="pw-toggle" type="button" data-target="adminPw">表示</button></div>' +
+      '</div>' +
+      '<div class="btn-row"><button class="btn" id="adminLoginBtn">ログイン</button></div>';
+    main.appendChild(panel);
+    bindPasswordToggle(panel);
+
+    panel.querySelector("#adminLoginBtn").onclick = async ()=>{
+      const password = panel.querySelector("#adminPw").value;
+      const msgEl = panel.querySelector("#adminLoginMsg");
+      const res = await callApi("adminLogin", { password });
+      if(res.ok){
+        setAdminSession(res.token);
+        renderAll();
+      } else {
+        msgEl.innerHTML = msgHtml(res.error || "ログインに失敗しました。", "error");
+      }
+    };
+    return;
+  }
+
+  const headerPanel = document.createElement("div");
+  headerPanel.className = "panel";
+  headerPanel.innerHTML =
+    '<h2>管理者メニュー</h2>' +
+    '<div class="btn-row"><button class="btn secondary" id="adminLogoutBtn">管理者ログアウト</button></div>' +
+    '<div id="adminMsg"></div>';
+  main.appendChild(headerPanel);
+  headerPanel.querySelector("#adminLogoutBtn").onclick = ()=>{ clearAdminSession(); renderAll(); };
+
+  const membersPanel = document.createElement("div");
+  membersPanel.className = "panel";
+  membersPanel.innerHTML = '<h2>会員一覧</h2><div id="adminMembersList"><div class="empty-state">読み込み中…</div></div>';
+  main.appendChild(membersPanel);
+
+  loadAdminMembers(membersPanel.querySelector("#adminMembersList"));
+}
+
+async function loadAdminMembers(listEl){
+  const res = await callApi("adminListMembers", { adminToken: state.adminToken });
+  if(!res.ok){
+    listEl.innerHTML = '<div class="empty-state">' + escHtml(res.error || "取得に失敗しました。") + '</div>';
+    if(res.error && res.error.indexOf("セッション") !== -1){
+      clearAdminSession();
+    }
+    return;
+  }
+  if(res.members.length === 0){
+    listEl.innerHTML = '<div class="empty-state">会員がいません。</div>';
+    return;
+  }
+  listEl.innerHTML = "";
+  res.members.forEach(m=>{
+    const row = document.createElement("div");
+    row.className = "event-card";
+    row.innerHTML =
+      '<h4 style="max-width:100%;">' + escHtml(m.nickname) + '　<span style="font-size:11px;font-weight:400;color:#8a7257;">(' + escHtml(m.role) + ')</span></h4>' +
+      '<div class="event-meta">' + escHtml(m.email) + '</div>' +
+      '<div class="event-meta">SNS: ' + escHtml(m.sns || "未登録") + '　／　状態: ' + (m.status === "active" ? "有効" : "停止中") + '</div>' +
+      '<div class="event-foot"></div>';
+    const foot = row.querySelector(".event-foot");
+    const toggleBtn = document.createElement("button");
+    toggleBtn.className = "btn small " + (m.status === "active" ? "ghost" : "secondary");
+    toggleBtn.textContent = m.status === "active" ? "利用停止にする" : "利用再開する";
+    toggleBtn.onclick = async ()=>{
+      const newStatus = m.status === "active" ? "suspended" : "active";
+      await callApi("adminUpdateMemberStatus", { adminToken: state.adminToken, email: m.email, status: newStatus });
+      await loadAdminMembers(listEl);
+    };
+    foot.appendChild(toggleBtn);
+    listEl.appendChild(row);
+  });
+}
+</script>
+
+</body>
+</html>
