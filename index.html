@@ -307,7 +307,7 @@ footer.app-footer{
 
 <script>
 /* ===== 設定 ===== */
-const GAS_API_URL = "https://script.google.com/macros/s/AKfycbx0IRhYORziIDQJNSq8Z_fKXb27Serb-qrDTbqe5SDJtpt6I5WIzMrtMXjhUkn3bLtyXw/exec";
+const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyfKFEaiyxRnMYtsjlmkrlq90tim7iQAvJrgh2ZQORxmT7JsgA5lsCLS2qFssaIlvONAg/exec";
 
 /* ===== 共通ユーティリティ ===== */
 function escHtml(str){
@@ -1041,6 +1041,53 @@ function renderAdminTab(main){
   main.appendChild(membersPanel);
 
   loadAdminMembers(membersPanel.querySelector("#adminMembersList"));
+
+  const eventsPanel = document.createElement("div");
+  eventsPanel.className = "panel";
+  eventsPanel.innerHTML = '<h2>イベント管理（強制削除）</h2><div id="adminEventsList"><div class="empty-state">読み込み中…</div></div>';
+  main.appendChild(eventsPanel);
+
+  loadAdminEvents(eventsPanel.querySelector("#adminEventsList"));
+}
+
+async function loadAdminEvents(listEl){
+  const res = await callApi("adminListEvents", { adminToken: state.adminToken });
+  if(!res.ok){
+    listEl.innerHTML = '<div class="empty-state">' + escHtml(res.error || "取得に失敗しました。") + '</div>';
+    if(res.error && res.error.indexOf("セッション") !== -1){
+      clearAdminSession();
+    }
+    return;
+  }
+  if(res.events.length === 0){
+    listEl.innerHTML = '<div class="empty-state">イベントがありません。</div>';
+    return;
+  }
+  listEl.innerHTML = "";
+  res.events.forEach(ev=>{
+    const closed = ev.status === "closed" || ev.status === "cancelled";
+    const row = document.createElement("div");
+    row.className = "event-card";
+    row.innerHTML =
+      '<span class="badge ' + (closed ? "closed" : "open") + '">' + (closed ? "募集終了" : "募集中") + '</span>' +
+      '<h4>' + escHtml(ev.title) + '</h4>' +
+      '<div class="event-meta">📅 ' + escHtml(formatDateTime(ev.datetime)) + (ev.place ? "　📍 " + escHtml(ev.place) : "") + '</div>' +
+      '<div class="event-meta">参加表明 ' + escHtml(ev.joinedCount) + '名</div>' +
+      '<div class="owner-tag">企画者：' + escHtml(ev.ownerNickname) + '（' + escHtml(ev.ownerEmail) + '）</div>' +
+      '<div class="event-foot"></div>';
+    const foot = row.querySelector(".event-foot");
+    const delBtn = document.createElement("button");
+    delBtn.className = "btn small ghost";
+    delBtn.textContent = "強制削除";
+    delBtn.onclick = async ()=>{
+      if(!confirm('「' + ev.title + '」を強制削除します。参加者データも削除されます。よろしいですか？')) return;
+      const delRes = await callApi("adminDeleteEvent", { adminToken: state.adminToken, eventId: ev.eventId });
+      if(!delRes.ok){ alert(delRes.error || "削除に失敗しました。"); return; }
+      await loadAdminEvents(listEl);
+    };
+    foot.appendChild(delBtn);
+    listEl.appendChild(row);
+  });
 }
 
 async function loadAdminMembers(listEl){
