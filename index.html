@@ -309,6 +309,34 @@ footer.app-footer{
 /* ===== 設定 ===== */
 const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyfKFEaiyxRnMYtsjlmkrlq90tim7iQAvJrgh2ZQORxmT7JsgA5lsCLS2qFssaIlvONAg/exec";
 
+/* ===== Geminiモデル設定 =====
+   value がAPIのモデルID。空文字 '' = 自動（汎用の最新モデル）
+   指定モデルに該当がない（廃止・未公開・名前違い）場合は
+   GAS側で汎用の最新モデルへ自動で切り替わる */
+const GEMINI_MODEL_OPTIONS = [
+  { value: '',                  label: '自動モード（汎用の最新）' },
+  { value: 'gemini-4-hydrogen', label: '4 Hydrogen（日々の暮らしをサポート）' },
+  { value: 'gemini-4-neon',     label: '4 Neon（Deeper analysis）' },
+  { value: 'gemini-4-carbon',   label: '4 Carbon（Code & complex work）' },
+  { value: 'gemini-4-argon',    label: '4 Argon' },
+  { value: 'gemini-3.8-flash',  label: '3.8 Flash' },
+  { value: 'gemini-3.5-flash',  label: '3.5 Flash' }
+];
+const GEMINI_MODEL_KEY = "sh_gemini_model";
+
+function getGeminiModel(){
+  let saved = null;
+  try { saved = localStorage.getItem(GEMINI_MODEL_KEY); } catch(e){ /* ignore */ }
+  return (saved !== null && GEMINI_MODEL_OPTIONS.some(o => o.value === saved)) ? saved : '';
+}
+function setGeminiModel(value){
+  try { localStorage.setItem(GEMINI_MODEL_KEY, value); } catch(e){ /* ignore */ }
+}
+function geminiModelLabel(value){
+  const opt = GEMINI_MODEL_OPTIONS.find(o => o.value === value);
+  return opt ? opt.label : (value || '自動モード（汎用の最新）');
+}
+
 /* ===== 共通ユーティリティ ===== */
 function escHtml(str){
   if(str === null || str === undefined) return "";
@@ -458,6 +486,11 @@ function renderTranslateTab(main){
       '<label>変換先の世代を選んでください</label>' +
       '<div class="gen-select" id="genSelect"></div>' +
     '</div>' +
+    '<div class="field">' +
+      '<label for="trModel">翻訳に使うAIモデル</label>' +
+      '<select id="trModel"></select>' +
+      '<p class="hint">選んだモデルが使えない時は、汎用の最新モデルに自動で切り替わります</p>' +
+    '</div>' +
     '<div id="trMsg"></div>' +
     '<div class="btn-row">' +
       '<button class="btn" id="trGoBtn">翻訳する</button>' +
@@ -465,6 +498,7 @@ function renderTranslateTab(main){
     '<div class="translate-stage">' +
       '<div class="translate-result placeholder" id="trResult">ここに翻訳結果が表示されます。</div>' +
     '</div>' +
+    '<p class="hint" id="trUsedModel"></p>' +
     '<p class="hint">※ AIによる自動翻訳です。雰囲気を楽しむための機能としてご利用ください。</p>';
   main.appendChild(panel);
 
@@ -482,11 +516,23 @@ function renderTranslateTab(main){
     genSelect.appendChild(chip);
   });
 
+  const modelSel = panel.querySelector("#trModel");
+  GEMINI_MODEL_OPTIONS.forEach(o=>{
+    const opt = document.createElement("option");
+    opt.value = o.value;
+    opt.textContent = o.label;
+    modelSel.appendChild(opt);
+  });
+  modelSel.value = getGeminiModel();
+  modelSel.onchange = ()=> setGeminiModel(modelSel.value);
+
   panel.querySelector("#trGoBtn").onclick = async ()=>{
     const text = panel.querySelector("#trInput").value.trim();
     const msgEl = panel.querySelector("#trMsg");
     const resultEl = panel.querySelector("#trResult");
+    const usedEl = panel.querySelector("#trUsedModel");
     msgEl.innerHTML = "";
+    usedEl.textContent = "";
     if(!text){
       msgEl.innerHTML = msgHtml("翻訳したい言葉を入力してください。", "error");
       return;
@@ -497,10 +543,14 @@ function renderTranslateTab(main){
     resultEl.classList.add("placeholder");
     resultEl.textContent = "翻訳しています…";
     try{
-      const res = await callApi("translate", { text: text, targetGeneration: selectedGen });
+      const res = await callApi("translate", { text: text, targetGeneration: selectedGen, model: modelSel.value });
       if(res.ok){
         resultEl.classList.remove("placeholder");
         resultEl.textContent = res.result;
+        if(res.model){
+          usedEl.textContent = "使用モデル: " + res.model +
+            (res.fallback && modelSel.value ? "（" + geminiModelLabel(modelSel.value) + " が使えないため自動で切り替えました）" : "");
+        }
       } else {
         msgEl.innerHTML = msgHtml(res.error || "翻訳に失敗しました。", "error");
         resultEl.classList.add("placeholder");

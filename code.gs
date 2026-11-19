@@ -11,6 +11,14 @@
  * PropertiesService に設定する値:
  *   SPREADSHEET_ID   : このアプリ専用スプレッドシートのID
  *   GEMINI_API_KEY   : 翻訳機能で使うGemini APIキー（Google AI Studioで取得）
+ *   GEMINI_MODEL     : 既定のGeminiモデル名（任意。例: gemini-4-hydrogen）
+ *                      未設定なら汎用の最新モデル（FALLBACK_GEMINI_MODELS）を使用
+ *
+ * Geminiモデルの決定順:
+ *   1. 画面の「AIモデル」で選ばれたモデル
+ *   2. スクリプトプロパティ GEMINI_MODEL
+ *   3. 汎用の最新モデル FALLBACK_GEMINI_MODELS を先頭から順に試す
+ *   指定モデルが存在しない（廃止・名前違い）場合は自動で汎用の最新モデルへ切り替える
  *   ADMIN_PASSWORD   : 管理者ログイン用パスワード(平文ではなくハッシュを推奨。ここではハッシュ保存)
  */
 
@@ -20,6 +28,16 @@ const SHEET_SESSIONS = 'Sessions';
 const SHEET_EVENTS = 'Events';
 const SHEET_PARTICIPANTS = 'Participants';
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 14; // 14日間
+
+// ===== Geminiモデル設定 =====
+// 指定なし・該当なしの時に使う汎用最新モデル（先頭から順に試す）
+//   gemini-flash-latest : Googleが常に最新の汎用モデルへ自動で差し替えるエイリアス
+//   gemini-4-hydrogen   : 2026年11月時点の汎用最新モデル（「日々の暮らしをサポート」）
+//   gemini-3.8-flash    : 最終的な保険
+const FALLBACK_GEMINI_MODELS = ['gemini-flash-latest', 'gemini-4-hydrogen', 'gemini-3.8-flash'];
+const GEMINI_MODEL_PATTERN = /^gemini-[a-z0-9][a-z0-9.\-]{0,60}$/;
+const GEMINI_RETRY_CODES = [429, 500, 503];
+const GEMINI_MAX_ATTEMPTS = 3;
 
 function getSS_() {
   const props = PropertiesService.getScriptProperties();
@@ -393,37 +411,104 @@ function handleTranslate_(body) {
     '変換後の言葉のみを1〜2文程度で出力し、説明や前置きは不要です。\n\n' +
     '変換したい言葉: ' + text;
 
-  const model = 'gemini-2.5-flash';
-  const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + apiKey;
+  const requestBody = {
+    contents: [{ parts: [{ text: prompt }] }]
+  };
+
+  // 指定モデル → 汎用の最新モデル（順番に）で、該当があるまで試す
+  const model = resolveGeminiModel_(body.model);
+  const candidates = [model].concat(FALLBACK_GEMINI_MODELS.filter(function (m) { return m !== model; }));
 
   try {
-    const response = UrlFetchApp.fetch(url, {
-      method: 'post',
-      contentType: 'application/json',
-      payload: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { maxOutputTokens: 300 }
-      }),
-      muteHttpExceptions: true
-    });
+    let usedModel = model;
+    let res = null;
+    for (let i = 0; i < candidates.length; i++) {
+      usedModel = candidates[i];
+      res = callGeminiModel_(usedModel, apiKey, requestBody);
+      if (!isModelNotFound_(res.code, res.text)) break;
+      console.warn('Geminiモデル「' + usedModel + '」に該当がないため次の候補に切り替えます');
+    }
 
-    const json = JSON.parse(response.getContentText());
+    let json;
+    try {
+      json = JSON.parse(res.text);
+    } catch (parseErr) {
+      return { ok: false, error: '翻訳処理でエラーが発生しました（HTTP ' + res.code + '）' };
+    }
 
-    if (json.error) {
-      return { ok: false, error: '翻訳処理でエラーが発生しました: ' + json.error.message };
+    if (res.code !== 200 || json.error) {
+      const msg = json.error && json.error.message ? json.error.message : ('HTTP ' + res.code);
+      return { ok: false, error: '翻訳処理でエラーが発生しました: ' + msg };
     }
 
     const candidate = json.candidates && json.candidates[0];
-    const parts = candidate && candidate.content && candidate.content.parts;
-    const resultText = parts && parts[0] && parts[0].text;
+    const parts = (candidate && candidate.content && candidate.content.parts) || [];
+    // 思考(thought)パートを除いた本文だけをつなげる
+    const resultText = parts
+      .filter(function (p) { return p && p.text && !p.thought; })
+      .map(function (p) { return p.text; })
+      .join('')
+      .trim();
 
     if (resultText) {
-      return { ok: true, result: resultText.trim() };
+      return { ok: true, result: resultText, model: usedModel, requestedModel: model, fallback: usedModel !== model };
     }
     return { ok: false, error: '翻訳結果の取得に失敗しました。' };
   } catch (err) {
     return { ok: false, error: '翻訳処理でエラーが発生しました: ' + err.message };
   }
+}
+
+// ===== Geminiモデル決定・呼び出し =====
+/**
+ * 使用するGeminiモデル名を決定する。
+ * 画面での指定 → スクリプトプロパティ → 汎用の最新モデル の順。不正な名前は無視する。
+ */
+function resolveGeminiModel_(requested) {
+  const req = String(requested || '').trim().toLowerCase();
+  if (req && GEMINI_MODEL_PATTERN.test(req)) return req;
+
+  const prop = String(PropertiesService.getScriptProperties().getProperty('GEMINI_MODEL') || '').trim().toLowerCase();
+  if (prop && GEMINI_MODEL_PATTERN.test(prop)) return prop;
+
+  return FALLBACK_GEMINI_MODELS[0];
+}
+
+/**
+ * Gemini APIを1モデルに対して呼び出す。混雑(429/500/503)時は待ち時間を伸ばしながら再試行する。
+ */
+function callGeminiModel_(model, apiKey, requestBody) {
+  const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent';
+  const options = {
+    method: 'post',
+    contentType: 'application/json',
+    headers: { 'x-goog-api-key': apiKey },
+    payload: JSON.stringify(requestBody),
+    muteHttpExceptions: true
+  };
+
+  let code = 0;
+  let text = '';
+  for (let attempt = 1; attempt <= GEMINI_MAX_ATTEMPTS; attempt++) {
+    const response = UrlFetchApp.fetch(url, options);
+    code = response.getResponseCode();
+    text = response.getContentText();
+    if (code === 200) break;
+    if (GEMINI_RETRY_CODES.indexOf(code) === -1 || attempt === GEMINI_MAX_ATTEMPTS) break;
+    Utilities.sleep(2000 * attempt);
+  }
+  return { code: code, text: text };
+}
+
+/**
+ * モデルが存在しない（廃止・名前違い）ことを示す応答かどうか。
+ */
+function isModelNotFound_(code, text) {
+  if (code === 404) return true;
+  if (code === 400 && /model|NOT_FOUND|not found|not supported/i.test(text)) {
+    return /not found|is not supported|NOT_FOUND|unknown model|invalid model/i.test(text);
+  }
+  return false;
 }
 
 // ===== イベント機能 =====
